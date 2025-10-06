@@ -111,6 +111,9 @@ def plot_revenue_line(df_month: pd.DataFrame, target_id: str):
 # ---------------------------
 # Carrega e renderiza seções
 # ---------------------------
+# ---------------------------
+# Carrega e renderiza seções
+# ---------------------------
 try:
     # Top clientes (PT-BR já devolvido pela sua API)
     df_top = fetch("top_clientes", limit=10)
@@ -118,4 +121,15 @@ try:
 
     # Vendas por mês (usa as chaves PT-BR do seu api.php novo)
     df_mes = fetch("vendas_por_mes")
-    render_table(df_mes, "vendas-por
+    render_table(df_mes, "vendas-por-mes")
+    plot_revenue_line(df_mes, "grafico-receita")
+
+    # Produtos
+    df_prod = fetch("produtos", limit=50)
+    render_table(df_prod, "produtos")
+
+except Exception as e:
+    msg = f"<pre class='error'>Erro ao carregar dados: {e}</pre>"
+    document.querySelector("#top-clientes").innerHTML = msg
+    document.querySelector("#vendas-por-mes").innerHTML = msg
+    document.querySelector("#produtos").innerHTML = msg
