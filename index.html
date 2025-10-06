@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard — CEDUCAP (API + Python no navegador)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- PyScript 2024 -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.9.1/core.css">
+  <script type="module" src="https://pyscript.net/releases/2024.9.1/core.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="container">
+    <h1>📊 Dashboard — CEDUCAP</h1>
+    <p class="muted">Dados ao vivo da API: <code>https://ceducap.com.br/python/api.php</code></p>
+  </header>
+
+  <main class="container grid">
+    <section class="card">
+      <h2>🔝 Top Clientes</h2>
+      <div id="top-clientes">Carregando…</div>
+    </section>
+
+    <section class="card">
+      <h2>🗓️ Vendas por Mês</h2>
+      <div id="vendas-por-mes">Carregando…</div>
+      <div id="grafico-receita" class="plot"></div>
+    </section>
+
+    <section class="card">
+      <h2>📦 Produtos</h2>
+      <div id="produtos">Carregando…</div>
+    </section>
+  </main>
+
+  <footer class="container muted">
+    Feito com PyScript (Python no navegador). Somente leitura.
+  </footer>
+
+  <!-- Configura o Python do PyScript (pacotes a carregar) -->
+  <py-config>
+    packages = [
+      "pyodide-http",   # habilita requests no navegador
+      "pandas",
+      "matplotlib"
+    ]
+  </py-config>
+
+  <!-- Código Python que roda no navegador -->
+  <script type="py">
+import pyodide_http; pyodide_http.patch_all()
+import pandas as pd
+import requests
+import matplotlib.pyplot as plt
+
+from pyscript import display, document, window  # utilitários do PyScript
+
+API   = "https://ceducap.com.br/python/api.php"
+TOKEN = "SOMENTE_LEITURA_123"
+
+# Sessão requests com headers "de navegador"
+session = requests.Session()
+session.headers.update({
+  "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "application/json, text/plain, */*",
+  "Connection": "close"
+})
+
+def fetch(resource, **params) -> pd.DataFrame:
+    params.update(resource=resource, token=TOKEN)
+    r = session.get(API, params=params, timeout=30)
+    r.raise_for_status()
+    try:
+        return pd.DataFrame(r.json())
+    except ValueError:
+        # Mostra erro no console do navegador e devolve DF vazio
+        print("Resposta não-JSON:", r.text[:500])
+        return pd.DataFrame()
+
+def render_table(df: pd.DataFrame, target_id: str, max_rows: int = 20):
+    target = document.querySelector(f"#{target_id}")
+    if df.empty:
+        target.innerHTML = "<p class='muted'>Sem dados.</p>"
+        return
+    html = df.head(max_rows).to_html(index=False, border=0, classes=["table"])
+    target.innerHTML = html
+
+def plot_revenue_line(df_month: pd.DataFrame, target_id: str):
+    if df_month.empty or "ano_mes" not in df_month.columns or "receita" not in df_month.columns:
+        document.querySelector(f"#{target_id}").innerHTML = "<p class='muted'>Sem dados para plotar.</p>"
+        return
+    # garante numérico + ordena por ano-mês
+    dfm = df_month.copy()
+    dfm["receita"] = pd.to_numeric(dfm["receita"], errors="coerce").fillna(0)
+    dfm["ano_mes_data"] = pd.to_datetime(dfm["ano_mes"] + "-01", errors="coerce")
+    dfm = dfm.sort_values("ano_mes_data")
+
+    plt.figure()
+    plt.plot(dfm["ano_mes"], dfm["receita"], marker="o")
+    plt.title("Receita por mês")
+    plt.xlabel("Ano-Mês")
+    plt.ylabel("Receita (R$)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    # display() do PyScript injeta a figura no destino
+    display(plt.gcf(), target=target_id)
+
+# ---------------------------
+# Carrega e renderiza seções
+# ---------------------------
+try:
+    # Top clientes (PT-BR já devolvido pela sua API)
+    df_top = fetch("top_clientes", limit=10)
+    render_table(df_top, "top-clientes", max_rows=10)
+
+    # Vendas por mês (usa as chaves PT-BR do seu api.php novo)
+    df_mes = fetch("vendas_por_mes")
+    render_table(df_mes, "vendas-por
