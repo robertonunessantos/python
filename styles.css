@@ -63,3 +63,22 @@ h1, h2 { margin: 0 0 12px; }
 .error {
   color: #b00020;
   background: #fde
+
+  /* Centraliza texto de todas as tabelas renderizadas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center; /* centraliza cabeçalhos e células */
+}
+
+table th, table td {
+  text-align: center;  /* garante centralização mesmo com temas pandas */
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+table thead th {
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
