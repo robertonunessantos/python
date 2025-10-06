@@ -14,12 +14,12 @@ body {
   color: var(--fg);
 }
 
+/* ---------- Layout / Container ---------- */
 .container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 16px;
 }
-
 .muted { color: var(--muted); }
 
 .grid {
@@ -27,12 +27,12 @@ body {
   grid-template-columns: 1fr;
   gap: 16px;
 }
-
 @media (min-width: 900px) {
   .grid { grid-template-columns: 1fr 1fr; }
   .grid .card:nth-child(3) { grid-column: 1 / span 2; }
 }
 
+/* ---------- Cartões ---------- */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -40,45 +40,55 @@ body {
   padding: 16px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
-
 h1, h2 { margin: 0 0 12px; }
 
+/* ---------- Tabelas (pandas) ---------- */
+/* O pandas geralmente usa <table class="dataframe">; nós também geramos "table".
+   Forçamos alinhamento central com !important para vencer estilos inline. */
+table.dataframe,
 .table {
   width: 100%;
   border-collapse: collapse;
 }
-.table th, .table td {
+
+/* Cabeçalhos e células centralizados SEMPRE */
+table.dataframe th,
+table.dataframe td,
+.table th,
+.table td {
+  text-align: center !important;   /* garante centralização */
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
-  vertical-align: top;
+  vertical-align: middle;
+  white-space: nowrap;
 }
+
+/* Cabeçalho com leve destaque */
+table.dataframe thead th,
+.table thead th {
+  background-color: #f8fafc;
+  font-weight: 700;
+}
+
+/* Listrado e hover */
+table.dataframe tr:nth-child(even) td,
+.table tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+table.dataframe tr:hover td,
 .table tr:hover td {
-  background: #fafbff;
+  background: #eef2ff;
 }
 
-.plot {
-  margin-top: 8px;
-}
+/* ---------- Gráfico ---------- */
+.plot { margin-top: 8px; }
 
+/* ---------- Mensagens de erro (corrigido) ---------- */
 .error {
   color: #b00020;
-  background: #fde
-
-  /* Centraliza texto de todas as tabelas renderizadas */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center; /* centraliza cabeçalhos e células */
-}
-
-table th, table td {
-  text-align: center;  /* garante centralização mesmo com temas pandas */
+  background: #fde6ea;
+  border: 1px solid #f7c2cb;
   padding: 8px;
-  border-bottom: 1px solid #ddd;
+  border-radius: 6px;
+  white-space: pre-wrap;
 }
-
-table thead th {
-  background-color: #f8fafc;
-  font-weight: bold;
-}
-
