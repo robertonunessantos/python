@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>Dashboard — CEDUCAP (API + Python no navegador)</title>
+  <title>Dashboard — CEDUCAP (API + Python no Navegador)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- PyScript 2024 -->
@@ -36,51 +36,52 @@
   </main>
 
   <footer class="container muted">
-    Feito com PyScript (Python no navegador). Somente leitura.
+    Feito com ❤️ e PyScript (Python no navegador). Somente leitura.
   </footer>
 
-  <!-- Configura o Python do PyScript (pacotes a carregar) -->
+  <!-- Configuração do PyScript -->
   <py-config>
     packages = [
-      "pyodide-http",   # habilita requests no navegador
+      "pyodide-http",
       "pandas",
       "matplotlib"
     ]
   </py-config>
 
-  <!-- Código Python que roda no navegador -->
+  <!-- Código Python -->
   <script type="py">
 import pyodide_http; pyodide_http.patch_all()
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
-
-from pyscript import display, document, window  # utilitários do PyScript
+from pyscript import display, document
 
 API   = "https://ceducap.com.br/python/api.php"
 TOKEN = "SOMENTE_LEITURA_123"
 
-# Sessão requests com headers "de navegador"
+# Sessão HTTP simulando um navegador
 session = requests.Session()
 session.headers.update({
-  "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Accept": "application/json, text/plain, */*",
-  "Connection": "close"
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Connection": "close"
 })
 
 def fetch(resource, **params) -> pd.DataFrame:
+    """Busca dados JSON da API e devolve como DataFrame pandas"""
     params.update(resource=resource, token=TOKEN)
     r = session.get(API, params=params, timeout=30)
     r.raise_for_status()
     try:
         return pd.DataFrame(r.json())
     except ValueError:
-        # Mostra erro no console do navegador e devolve DF vazio
         print("Resposta não-JSON:", r.text[:500])
         return pd.DataFrame()
 
 def render_table(df: pd.DataFrame, target_id: str, max_rows: int = 20):
+    """Renderiza tabela HTML no elemento com ID especificado"""
     target = document.querySelector(f"#{target_id}")
     if df.empty:
         target.innerHTML = "<p class='muted'>Sem dados.</p>"
@@ -89,10 +90,10 @@ def render_table(df: pd.DataFrame, target_id: str, max_rows: int = 20):
     target.innerHTML = html
 
 def plot_revenue_line(df_month: pd.DataFrame, target_id: str):
+    """Desenha gráfico de linha com receita mensal"""
     if df_month.empty or "ano_mes" not in df_month.columns or "receita" not in df_month.columns:
         document.querySelector(f"#{target_id}").innerHTML = "<p class='muted'>Sem dados para plotar.</p>"
         return
-    # garante numérico + ordena por ano-mês
     dfm = df_month.copy()
     dfm["receita"] = pd.to_numeric(dfm["receita"], errors="coerce").fillna(0)
     dfm["ano_mes_data"] = pd.to_datetime(dfm["ano_mes"] + "-01", errors="coerce")
@@ -104,22 +105,19 @@ def plot_revenue_line(df_month: pd.DataFrame, target_id: str):
     plt.xlabel("Ano-Mês")
     plt.ylabel("Receita (R$)")
     plt.xticks(rotation=45)
+    plt.grid(True)
     plt.tight_layout()
-    # display() do PyScript injeta a figura no destino
     display(plt.gcf(), target=target_id)
 
 # ---------------------------
 # Carrega e renderiza seções
 # ---------------------------
-# ---------------------------
-# Carrega e renderiza seções
-# ---------------------------
 try:
-    # Top clientes (PT-BR já devolvido pela sua API)
+    # Top clientes
     df_top = fetch("top_clientes", limit=10)
     render_table(df_top, "top-clientes", max_rows=10)
 
-    # Vendas por mês (usa as chaves PT-BR do seu api.php novo)
+    # Vendas por mês
     df_mes = fetch("vendas_por_mes")
     render_table(df_mes, "vendas-por-mes")
     plot_revenue_line(df_mes, "grafico-receita")
@@ -133,3 +131,6 @@ except Exception as e:
     document.querySelector("#top-clientes").innerHTML = msg
     document.querySelector("#vendas-por-mes").innerHTML = msg
     document.querySelector("#produtos").innerHTML = msg
+  </script>
+</body>
+</html>
